@@ -3,7 +3,7 @@ name = "tts-clone-skill"
 version = "0.1.0"
 description = "CLI and agent skill for Gemini voice replication and local Qwen3-TTS cloning"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = []
 
