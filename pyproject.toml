@@ -1,0 +1,25 @@
+[project]
+name = "tts-clone-skill"
+version = "0.1.0"
+description = "CLI and agent skill for Gemini voice replication and local Qwen3-TTS cloning"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+qwen = ["qwen-tts>=0.1.1", "soundfile>=0.12"]
+
+[project.scripts]
+tts-clone = "tts_clone.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

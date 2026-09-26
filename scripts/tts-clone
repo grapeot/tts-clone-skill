@@ -1,0 +1,8 @@
+#!/bin/sh
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+if [ -x "$ROOT/.venv/bin/python" ]; then
+  PY="$ROOT/.venv/bin/python"
+else
+  PY=python3
+fi
+exec "$PY" -m tts_clone "$@"
