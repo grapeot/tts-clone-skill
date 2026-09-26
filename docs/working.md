@@ -6,6 +6,7 @@
 
 - Initial release of the public CLI and skill supporting Gemini 3.8 Flash TTS voice replication and local Qwen3-TTS 1.7B Base cloning.
 - Ships without bundled voice samples.
+- Raised `requires-python` to `>=3.10` after CI failed resolving the optional Qwen extra on the 3.9 marker.
 
 ## Lessons Learned
 
@@ -16,3 +17,4 @@
 - When both `GEMINI_API_KEY` and `GOOGLE_API_KEY` are configured, the official SDK defaults to `GOOGLE_API_KEY`. This CLI prioritizes `GEMINI_API_KEY`.
 - Qwen cloning fidelity depends on an accurate, verbatim `ref_text`. Do not declare `flash-attn` as a required dependency on macOS; use `sdpa`.
 - Pricing terms and regional availability remain subject to change. On 2026-09-26, the pricing documentation listed Flash TTS paid audio output at $9.00 per 1M tokens through 2026-12-31. Always consult the official pricing page directly before quoting rates.
+- An optional extra that needs a newer Python than `requires-python` still breaks `uv pip install -e '.[dev]'`. uv resolves every extra against the project's Python range. The Qwen extra needs Python 3.10, so the floor is `>=3.10`.
