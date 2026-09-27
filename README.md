@@ -106,6 +106,18 @@ python -m tts_clone qwen-clone \
   -o qwen.wav
 ```
 
+To voice a script of many lines, pass them in one call so the model loads and the reference is encoded once:
+
+```bash
+python -m tts_clone qwen-clone \
+  --ref-audio reference.wav \
+  --ref-text-file reference.txt \
+  --lines-file lines.json \
+  --out-dir takes/            # writes takes/<id>.wav; --suffix _b for alternate takes
+```
+
+`lines.json` is `[{"id": "s01", "text": "..."}]` or `{"segments": [{"id": "s01", "say": "..."}]}`. The JSON output lists each line's audio and compute seconds and the one-time load cost.
+
 `reference.txt` must contain a verbatim transcript of the reference clip. The default model is `Qwen/Qwen3-TTS-12Hz-1.7B-Base`. On machines without CUDA, the CLI uses MPS if available, otherwise CPU. Both paths use `sdpa` attention. Do not require `flash-attn` on macOS.
 
 ## Output

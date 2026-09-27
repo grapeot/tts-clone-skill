@@ -9,6 +9,11 @@
 - Raised `requires-python` to `>=3.10` after CI failed resolving the optional Qwen extra on the 3.9 marker.
 - Added the `private/` convention: `gemini-speak` resolves a fresh `voicekey.txt` first, then falls back to `reference` and `consent` clips (WAV preferred, m4a converted into `private/prepared/`), re-replicating when the 7-day key has expired.
 
+### 2026-09-27
+
+- `qwen-clone --lines-file --out-dir [--suffix]`: voice a multi-line script with one model load and one voice-clone prompt. Validated on a 16-line video narration; a live two-line run loaded in 11.0 s and generated 3.76 s of audio in 7.6 s.
+- Fixed: `qwen-clone` stdout was not valid JSON on a live run, because `qwen-tts` prints a flash-attn banner to stdout on import. All Qwen work now runs with stdout redirected to stderr.
+
 ## Lessons Learned
 
 - Gemini voice creation failures can manifest as HTTP 500 with `Error translating server response to JSON`. The actionable error text is located in the nested `Original error`.
@@ -19,3 +24,7 @@
 - Qwen cloning fidelity depends on an accurate, verbatim `ref_text`. Do not declare `flash-attn` as a required dependency on macOS; use `sdpa`.
 - Pricing terms and regional availability remain subject to change. On 2026-09-26, the pricing documentation listed Flash TTS paid audio output at $9.00 per 1M tokens through 2026-12-31. Always consult the official pricing page directly before quoting rates.
 - An optional extra that needs a newer Python than `requires-python` still breaks `uv pip install -e '.[dev]'`. uv resolves every extra against the project's Python range. The Qwen extra needs Python 3.10, so the floor is `>=3.10`.
+- `qwen-tts` prints to stdout on import. Anything that owes callers a machine-readable stdout has to redirect the model stack's output; a unit test with a fake model that prints now guards it.
+- Voicing a narration line by line through the single-line CLI reloads the 1.7B model and re-encodes the reference every time. Batch the lines.
+- Wrong readings of polyphonic Chinese characters are the TTS error worth hunting: a recogniser transcript shows them as a different word (重读 read as *zhòng* came back as 中毒). Rewrite the text around the character; homophones and digits in the transcript are not errors.
+- Speaking rate is engine-specific. On the same 598-character script: Gemini (style asking for a medium pace) 4.9 characters per second, Qwen 5.7.

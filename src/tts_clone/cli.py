@@ -6,7 +6,7 @@ from tts_clone.envelope import fail, ok
 from tts_clone.gemini import GeminiError, replicate, synthesize
 from tts_clone.local_assets import resolve
 from tts_clone.phrases import DOCS_URL, PHRASES
-from tts_clone.qwen import DEFAULT_MODEL, clone
+from tts_clone.qwen import DEFAULT_MODEL, clone, clone_many, load_lines
 
 
 def _public_input(args):
@@ -136,6 +136,25 @@ def cmd_gemini_speak(args):
 
 
 def cmd_qwen_clone(args):
+    if args.lines_file or args.out_dir:
+        if not (args.lines_file and args.out_dir) or args.text or args.text_file or args.output:
+            return fail("qwen-clone", _public_input(args), "usage",
+                        "batch mode needs --lines-file and --out-dir, and no --text/--text-file/-o", 2)
+        ref_text = open(args.ref_text_file, encoding="utf-8").read().strip()
+        if not ref_text:
+            return fail("qwen-clone", _public_input(args), "usage", "ref text is empty", 2)
+        try:
+            lines = load_lines(args.lines_file)
+        except (OSError, ValueError, KeyError) as exc:
+            return fail("qwen-clone", _public_input(args), "usage", f"{type(exc).__name__}: {exc}", 2)
+        try:
+            data = clone_many(args.ref_audio, ref_text, lines, args.out_dir, model_id=args.model,
+                              device=args.device, suffix=args.suffix)
+        except Exception as exc:
+            return fail("qwen-clone", _public_input(args), "qwen_error", f"{type(exc).__name__}: {exc}", 2)
+        return ok("qwen-clone", _public_input(args), data)
+    if not args.output:
+        return fail("qwen-clone", _public_input(args), "usage", "-o is required unless --lines-file is given", 2)
     text = args.text
     if args.text_file:
         text = open(args.text_file, encoding="utf-8").read().strip()
@@ -192,7 +211,11 @@ def build_parser():
     qwen.add_argument("--ref-text-file", required=True)
     qwen.add_argument("--text")
     qwen.add_argument("--text-file")
-    qwen.add_argument("-o", "--output", required=True)
+    qwen.add_argument("-o", "--output")
+    qwen.add_argument("--lines-file", help="JSON lines to voice in one model load: "
+                      "[{id, text}] or {segments: [{id, say}]}")
+    qwen.add_argument("--out-dir", help="batch output directory; writes <id><suffix>.wav")
+    qwen.add_argument("--suffix", default="", help="batch file suffix, e.g. _b for alternate takes")
     qwen.add_argument("--model", default=DEFAULT_MODEL)
     qwen.add_argument("--device")
     qwen.set_defaults(func=cmd_qwen_clone)
