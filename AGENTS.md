@@ -28,3 +28,4 @@ Qwen model weights are excluded from default test runs. Install `.[qwen]` only w
 - `skills/tts_clone.md` is the only skill file to register in a workspace index.
 - `src/tts_clone/` contains the CLI implementation.
 - `docs/` stores product requirements, architecture notes, and test plans.
+- Per-speaker assets (reference, consent, voice key, transcripts) belong in `private/`, which is gitignored. Never stage it.

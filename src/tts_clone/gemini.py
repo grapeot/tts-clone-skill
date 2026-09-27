@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 import wave
@@ -113,6 +114,8 @@ def replicate(source, consent, out_key, store=False, model=DEFAULT_MODEL, langua
     destination = Path(out_key)
     destination.write_text(voice_value)
     destination.chmod(0o600)
+    stamp = Path(str(destination) + ".created")
+    stamp.write_text(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     return {
         "voice_key_file": str(destination),
         "prefix": voice_prefix(voice_value),

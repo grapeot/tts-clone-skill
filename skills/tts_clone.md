@@ -50,6 +50,21 @@ A task is complete only when all of the following conditions are met:
 
 Prefer the CLI over manual HTTP requests. Follow this execution order: inspect audio duration, prepare a 24 kHz mono WAV file, replicate the voice, and synthesize a line not present in the reference clip. For comparison, run Qwen on the same reference audio and target text.
 
+Keep caller-specific assets in a `private/` directory beside the repo checkout and treat it as untracked. `.gitignore` already blocks `private/` and common audio extensions. The convention inside `private/`:
+
+- `reference.wav` or `reference.m4a`: the 10 to 30 second reference clip.
+- `consent.wav` or `consent.m4a`: the exact official consent sentence.
+- `reference.txt`: verbatim transcript of the reference clip, for Qwen.
+- `voicekey.txt` plus `voicekey.txt.created`: the client-held key and its ISO-8601 UTC creation stamp.
+
+`gemini-speak` resolves assets in this order when `--voice-key-file` is omitted:
+
+1. `private/voicekey.txt` if the `.created` stamp (or file mtime) is at most 7 days old.
+2. Otherwise `reference` and `consent` in `private/`, preferring WAV over m4a, converting non-WAV into `private/prepared/`, then running replication and writing a fresh key.
+3. If neither the key nor both clips exist, the command fails with usage naming the missing files.
+
+`gemini-replicate` writes `voicekey.txt.created` next to `--out-key`. A key without a stamp is dated by file mtime.
+
 If Gemini returns an HTTP 500 status with `Error translating server response to JSON`, inspect the nested `Original error` field. In a live call on 2026-09-26, this wrapper concealed an underlying 400 consent rejection. Phrase mismatch and speaker mismatch are distinct failures. A Chinese consent recording can fail the phrase check even if another speech-to-text model transcribes the official sentence correctly. An English consent recording may pass phrase verification but fail speaker matching if not recorded in the same sitting as the reference. When issues arise, re-record both clips back-to-back rather than running loudness normalization on an isolated file.
 
 The `response_format` must be configured as `{"type": "audio"}`. Passing `AUDIO` in `response_modalities` will be rejected.

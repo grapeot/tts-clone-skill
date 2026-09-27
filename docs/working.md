@@ -7,6 +7,7 @@
 - Initial release of the public CLI and skill supporting Gemini 3.8 Flash TTS voice replication and local Qwen3-TTS 1.7B Base cloning.
 - Ships without bundled voice samples.
 - Raised `requires-python` to `>=3.10` after CI failed resolving the optional Qwen extra on the 3.9 marker.
+- Added the `private/` convention: `gemini-speak` resolves a fresh `voicekey.txt` first, then falls back to `reference` and `consent` clips (WAV preferred, m4a converted into `private/prepared/`), re-replicating when the 7-day key has expired.
 
 ## Lessons Learned
 

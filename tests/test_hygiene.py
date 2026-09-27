@@ -1,7 +1,7 @@
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SKIP = {".venv", ".git", "__pycache__", ".pytest_cache"}
+SKIP = {".venv", ".git", "__pycache__", ".pytest_cache", "private", "prepared"}
 BANNED = [
     "/Users/",
     "/home/",
