@@ -20,12 +20,14 @@ A task is complete only when all of the following conditions are met:
 - The CLI JSON output contains neither the API key nor the voice key. The secret key is written solely to the file passed to `--out-key`.
 - The output WAV exists, has a duration greater than zero, and is not simply a renamed reference file.
 - For Qwen, `ref_text` is an accurate transcript of the reference clip, not the line to synthesize.
+- For a script of many lines: every line has a non-empty WAV, and each take has been transcribed back and compared with its text, with every difference judged as recogniser noise (same sound) or a misreading (different sound) and misreadings re-voiced.
 
 ## Resources
 
 - CLI: `python -m tts_clone`, after installing via `uv pip install -e .` in this repository.
 - Verified Gemini model ID (as of 2026-09-26): `gemini-3.8-flash-tts`. Also available: `gemini-3.8-flash-lite-tts`. Re-check documentation if either ID returns a 404.
 - Qwen clone model: `Qwen/Qwen3-TTS-12Hz-1.7B-Base`. Upstream package: `qwen-tts`. Optional dependencies: `uv pip install -e '.[qwen]'`.
+- Qwen batch mode: `qwen-clone --lines-file lines.json --out-dir takes/ [--suffix _b]` loads the model and encodes the reference once for all lines.
 - Gemini API key: `GEMINI_API_KEY` environment variable, generated in Google AI Studio. Never read credentials from chat transcripts or write them into the repository.
 - Official documentation: https://ai.google.dev/gemini-api/docs/voice-replication
 - Pricing documentation (verify before quoting): https://ai.google.dev/gemini-api/docs/pricing
@@ -66,6 +68,8 @@ Keep caller-specific assets in a `private/` directory beside the repo checkout a
 `gemini-replicate` writes `voicekey.txt.created` next to `--out-key`. A key without a stamp is dated by file mtime.
 
 If Gemini returns an HTTP 500 status with `Error translating server response to JSON`, inspect the nested `Original error` field. In a live call on 2026-09-26, this wrapper concealed an underlying 400 consent rejection. Phrase mismatch and speaker mismatch are distinct failures. A Chinese consent recording can fail the phrase check even if another speech-to-text model transcribes the official sentence correctly. An English consent recording may pass phrase verification but fail speaker matching if not recorded in the same sitting as the reference. When issues arise, re-record both clips back-to-back rather than running loudness normalization on an isolated file.
+
+For a script of many lines (a narration), voice every line in one `qwen-clone --lines-file` call rather than one call per line: loading the model and encoding the reference took 8-11 s on Apple Silicon (MPS), paid once instead of per line, and each line then took 2-2.5x its audio length to generate. Transcribe the takes back to check them; you cannot listen to them. Most differences a recogniser reports are homophones or digits and are harmless. A polyphonic Chinese character read with the wrong reading is a real error (重 in 重读 read as *zhòng*); rewrite the text around it (重新读) rather than voicing the same text again. Speaking rate differs between engines: the same 598-character Chinese script took 121 s of speech from Gemini with a medium-pace style and 106 s from Qwen, so measure one take before fixing a script's length to a target duration.
 
 The `response_format` must be configured as `{"type": "audio"}`. Passing `AUDIO` in `response_modalities` will be rejected.
 

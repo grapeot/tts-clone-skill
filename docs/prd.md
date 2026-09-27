@@ -6,7 +6,7 @@ An autonomous agent, or a person directing an agent, who needs a short synthesiz
 
 ## Job
 
-Convert two local audio recordings into a cloned voice—using either Gemini voice replication or local Qwen3-TTS inference—and write a new line of speech to a WAV file.
+Convert two local audio recordings into a cloned voice—using either Gemini voice replication or local Qwen3-TTS inference—and write a new line of speech to a WAV file, or every line of a multi-line script (a video narration) to one WAV per line.
 
 ## Success
 
@@ -15,6 +15,8 @@ Convert two local audio recordings into a cloned voice—using either Gemini voi
 - Voice secrets are saved directly to disk and never printed to stdout.
 - The workflow supports passing the same reference audio and synthesis text to Qwen for listening comparisons.
 - Offline tests pass without network connectivity or downloaded model weights.
+- A multi-line script voiced with Qwen loads the model and encodes the reference once, writes `<id>.wav` per line, and reports per-line audio and compute seconds.
+- Stdout carries exactly one JSON object even when the model stack prints banners or warnings.
 
 ## Non-goals
 
