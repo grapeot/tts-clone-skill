@@ -4,6 +4,7 @@ import sys
 from tts_clone.audio import inspect_file, prepare_wav
 from tts_clone.envelope import fail, ok
 from tts_clone.gemini import GeminiError, replicate, synthesize
+from tts_clone.local_assets import resolve
 from tts_clone.phrases import DOCS_URL, PHRASES
 from tts_clone.qwen import DEFAULT_MODEL, clone
 
@@ -77,9 +78,42 @@ def cmd_gemini_speak(args):
         text = open(args.text_file, encoding="utf-8").read().strip()
     if not text:
         return fail("gemini-speak", _public_input(args), "usage", "text is empty", 2)
+    key_file = args.voice_key_file
+    fallback = None
+    if not key_file:
+        fallback = resolve(args.private_dir)
+        if fallback["mode"] == "missing":
+            return fail(
+                "gemini-speak",
+                _public_input(args),
+                "usage",
+                "no voice key and private dir missing " + ",".join(fallback["missing"]),
+                2,
+                private_dir=str(args.private_dir),
+            )
+        if fallback["mode"] == "replicate":
+            try:
+                replicate(
+                    fallback["reference"],
+                    fallback["consent"],
+                    fallback["key_file"],
+                    model=args.model,
+                )
+                fallback = resolve(args.private_dir)
+            except GeminiError as exc:
+                code = 10 if exc.status in (0, 401, 403) else 12 if exc.status in (400, 500) else 13
+                return fail(
+                    "gemini-speak",
+                    _public_input(args),
+                    "gemini_error",
+                    exc.message,
+                    code,
+                    http_status=exc.status,
+                )
+        key_file = fallback["key_file"]
     try:
         data = synthesize(
-            args.voice_key_file,
+            key_file,
             text,
             args.output,
             model=args.model,
@@ -96,6 +130,8 @@ def cmd_gemini_speak(args):
             code,
             http_status=exc.status,
         )
+    if fallback is not None:
+        data["voice_key_source"] = fallback["mode"]
     return ok("gemini-speak", _public_input(args), data)
 
 
@@ -141,7 +177,8 @@ def build_parser():
     replicate_cmd.set_defaults(func=cmd_gemini_replicate)
 
     speak = sub.add_parser("gemini-speak")
-    speak.add_argument("--voice-key-file", required=True)
+    speak.add_argument("--voice-key-file")
+    speak.add_argument("--private-dir", default="private")
     speak.add_argument("--text")
     speak.add_argument("--text-file")
     speak.add_argument("-o", "--output", required=True)

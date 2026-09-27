@@ -60,10 +60,10 @@ python -m tts_clone inspect reference.wav --role reference
 python -m tts_clone gemini-replicate \
   --source reference.wav \
   --consent consent.wav \
-  --out-key voice.key
+  --out-key private/voicekey.txt
 
 python -m tts_clone gemini-speak \
-  --voice-key-file voice.key \
+  --voice-key-file private/voicekey.txt \
   --text "A short line the listener has not heard in the reference." \
   --language zh-CN \
   -o sample.wav
@@ -71,7 +71,30 @@ python -m tts_clone gemini-speak \
 
 Adding `--store` asks Google to retain a `voice_` id for one year. The project cap is 200 stored voices, shared with prompted voices. Without `--store`, the API returns a client-held `voicekey_` documented as valid for 7 days. The CLI writes the secret to `--out-key` and never prints it to stdout.
 
-Voice replication in AI Studio is unavailable in Illinois, Texas, the EEA, the UK, Switzerland, and India. The voice-replication API documentation does not repeat that list.
+## Private assets and the 7-day key
+
+The client-held key expires after about 7 days. Keep per-speaker assets in a `private/` directory that git never sees:
+
+```text
+private/
+├── reference.wav   # or reference.m4a
+├── consent.wav     # or consent.m4a
+├── reference.txt   # verbatim transcript, for Qwen
+└── voicekey.txt    # + voicekey.txt.created (ISO-8601 UTC)
+```
+
+`gemini-speak` can resolve that directory by itself when `--voice-key-file` is omitted:
+
+```bash
+cd <repo checkout>
+python -m tts_clone gemini-speak \
+  --private-dir private \
+  --text-file line.txt \
+  --language zh-CN \
+  -o out.wav
+```
+
+It uses the key when the stamp is at most 7 days old. When the key is missing or stale, it converts the m4a reference and consent into `private/prepared/*.wav` and re-runs replication, so a stale key does not require re-recording; the original audio is the fallback. Voice replication in AI Studio is unavailable in Illinois, Texas, the EEA, the UK, Switzerland, and India. The voice-replication API documentation does not repeat that list.
 
 ## Qwen3-TTS
 

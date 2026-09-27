@@ -13,6 +13,7 @@ build/
 *.m4a
 *.mp3
 *.flac
+private/
 voicekey.txt
 voice_id.txt
 voice.key
