@@ -39,14 +39,18 @@ def test_resolve_prefers_fresh_key(tmp_path):
 
 
 def test_resolve_falls_back_to_m4a_prepared_wav(tmp_path):
+    import shutil
+
+    if not shutil.which("ffmpeg"):
+        import pytest
+
+        pytest.skip("ffmpeg not installed")
     m4a = tmp_path / "reference.m4a"
     _wav(tmp_path / "seed.wav", 1)
-    import shutil
     import subprocess
 
-    ffmpeg = shutil.which("ffmpeg")
     subprocess.run(
-        [ffmpeg, "-y", "-i", str(tmp_path / "seed.wav"), str(m4a)],
+        [shutil.which("ffmpeg"), "-y", "-i", str(tmp_path / "seed.wav"), str(m4a)],
         check=True,
         capture_output=True,
     )
